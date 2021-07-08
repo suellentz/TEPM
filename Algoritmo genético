@@ -1,0 +1,169 @@
+#include <random>
+#include <algorithm>
+#include <iterator>
+#include <iostream>
+#include <time.h>
+
+
+using namespace std;
+
+// Imprime matrizes
+void ImprimirMatriz(double m[50][9])
+ {
+ int i; int j;
+ for(j=0;j<50;j++){
+ for (i = 0; i < 9; i++)
+ cout << m[j][i] << " ";
+ cout << endl;
+ }
+ }
+
+double CalculaCusto(double Distancias[8][8], vector<double> v)
+{
+int p1,p2;
+double custo=0;
+
+ for (int i = 0; i < 8; ++i) {
+ p1 = v[i];
+ if (i == 7) {
+ p2 = v[0];
+ }
+ else {
+ p2 = v[i + 1];
+ }
+ custo += Distancias[p1][p2];
+ }
+ return custo;
+} 
+
+//Ordena matriz pelo custo
+double Ordena(double pop[50][9])
+{
+ int n=50;
+ int prev, next, aux;
+ for(prev=0 ; prev<n-1 ; prev++){
+ for(next=prev+1 ; next<n ; next++){
+ aux=pop[prev][8];
+ if(pop[next][8]<pop[prev][8]){
+ pop[prev][8]=pop[next][8];
+ pop[next][8] = aux;
+ }
+ }
+ }
+ cout <<pop;
+}
+
+int main()
+{
+ vector<double> v{3,2,1, 4, 5, 6, 7, 0};
+ int tampop=50;
+ double pop[tampop][9];
+ int p1=0;
+ int p2=0;
+ double custo = 0;
+ double *vet;
+ int tam;
+ int vetSize;
+ int inicio,fim;
+ double Distancias[8][8] = {0, 1.6396, 1.1299, 0.4612, 0.5869, 0.5396, 1.5399, 0.6289, 
+                        1.6396, 0, 0.7315, 1.9984, 1.2814, 1.4028, 0.508, 2.2678, 
+                        1.1299, 0.7315, 0, 1.5681, 0.6222, 1.1406, 0.4212, 1.736, 
+                        0.4612, 1.9984, 1.5681, 0, 1.0481, 0.6534, 1.9657, 0.411, 
+                        0.5869, 1.2814, 0.6222, 1.0481, 0, 0.8563, 1.0426, 1.1397, 
+                        0.5396, 1.4028, 1.1406, 0.6534, 0.8563, 0, 1.477, 1.0223, 
+                        1.5399, 0.508, 0.4212, 1.9657, 1.0426, 1.477, 0, 2.1534, 
+                        0.6289, 2.2678, 1.736, 0.411, 1.1397, 1.0223, 2.1534, 0};
+
+inicio=clock();
+
+ for(int h=0; h<tampop; h++){
+ //embaralhar
+ // Motor com semente gerada por `rd`.
+ std::random_device rd;
+ std::mt19937 g(rd());
+ // Embaralha o vetor `v` usando o motor de números aleatórios `g`.
+ std::shuffle(v.begin(), v.end(), g);
+ // A partir daqui, `v` está com seus elementos embaralhados.
+ for (int j=0;j<8; ++j){
+ pop[h][j]=v[j];
+ }
+
+ //Calcula o custo
+ for (size_t i = 0; i < v.size(); ++i) {
+ p1 = v[i];
+ if (i == v.size()-1) {
+ p2 = v[0];
+ }
+ else {
+ p2 = v[i + 1];
+ }
+ custo += Distancias[p1][p2];
+ }
+ pop[h][8]=custo;
+ custo=0;
+ }
+
+ //Ordena a matriz do menor para maior custo
+ int n=50;
+ int prev, next, j;
+ double aux;
+ for(prev=0 ; prev<n-1 ; prev++){
+    for(next=prev+1 ; next<n ; next++){
+        if(pop[next][8]<pop[prev][8]){
+            for(j=0;j<9;j++){
+            aux=pop[prev][j];
+            pop[prev][j]=pop[next][j];
+            pop[next][j] = aux;
+            }
+        }
+    }
+ }
+ 
+for(int m=0; m<20; m++){
+ //Mutação
+ int corta =25;
+ vector<double> v2;
+ int aleatorio1,aleatorio2;
+ for(int k=0; k<corta; k++){
+    for(int r=0; r<8; r++){
+    pop[k+corta][r]=pop[k][r];
+    }
+    aleatorio1=rand()%7;
+    aleatorio2=rand()%7;
+    pop[k+corta][aleatorio1]=pop[k][aleatorio2];
+    pop[k+corta][aleatorio2]=pop[k][aleatorio1];
+    v2={pop[k+corta][0],pop[k+corta][1],pop[k+corta][2],pop[k+corta][3],pop[k+corta][4],
+    pop[k+corta][5],pop[k+corta][6],pop[k+corta][7]};
+ 
+    pop[k+corta][8]=CalculaCusto(Distancias, v2);
+
+ }
+ 
+ //Ordena a matriz do menor para maior custo
+ int n=50;
+ int prev, next,j;
+ double aux;
+ for(prev=0 ; prev<n-1 ; prev++){
+    for(next=prev+1 ; next<n ; next++){
+        if(pop[next][8]<pop[prev][8]){
+            for(j=0;j<9;j++){
+            aux=pop[prev][j];
+            pop[prev][j]=pop[next][j];
+            pop[next][j] = aux;
+            }
+        }
+    }
+ }
+ 
+}
+
+ //ImprimirMatriz(Ordena(pop));
+fim = clock();
+cout << "Tempo: " << (fim - inicio)/(double)CLOCKS_PER_SEC << "\n";
+ ImprimirMatriz(pop);
+ cout <<custo << endl;
+
+ return 0;
+}
+
+
