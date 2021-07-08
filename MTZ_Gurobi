@@ -1,0 +1,132 @@
+
+#include <iostream>
+#include "gurobi_c++.h"
+#include <cassert>
+#include <cstdlib>
+#include <cmath>
+#include <sstream>
+using namespace std;
+
+
+
+int main(int argc,
+	char* argv[])
+{
+	try {
+
+
+		//Matriz de distâncias
+		double Distancias[8][8] = { 0, 1.6396, 1.1299, 0.4612, 0.5869, 0.5396, 1.5399, 0.6289, 
+									1.6396, 0, 0.7315, 1.9984, 1.2814, 1.4028, 0.508, 2.2678,
+									1.1299, 0.7315, 0, 1.5681, 0.6222, 1.1406, 0.4212, 1.736,
+									0.4612, 1.9984, 1.5681, 0, 1.0481, 0.6534,	1.9657, 0.411, 
+									0.5869, 1.2814, 0.6222, 1.0481, 0, 0.8563, 1.0426, 1.1397, 
+									0.5396, 1.4028, 1.1406, 0.6534, 0.8563, 0, 1.477, 1.0223, 
+									1.5399, 0.508, 0.4212, 1.9657, 1.0426, 1.477, 0, 2.1534, 
+									0.6289, 2.2678, 1.736, 0.411, 1.1397, 1.0223, 2.1534, 0 };
+
+
+		// Create an environment
+		GRBEnv Ambiente = GRBEnv(true);
+		Ambiente.set("LogFile", "C:\\Teste\\tsp.log");
+		Ambiente.start();
+
+
+		// Create an empty model
+		GRBModel Modelo = GRBModel(Ambiente);
+
+
+		// Variáveis de decisão
+		GRBVar** X;
+		GRBVar* U;
+		X = new GRBVar * [8];
+		U = Modelo.addVars(8);
+		for (int i = 0; i < 8; i++)
+		{
+			X[i] = Modelo.addVars(8);
+			for (int j = 0; j < 8; j++)
+			{
+				if (j != i)
+				{
+					X[i][j] = Modelo.addVar(0, 1, Distancias[i][j], GRB_BINARY, "x_" + to_string(i) + "_" + to_string(j));
+				}
+			}
+		}
+		U[0] = Modelo.addVar(0, 0, 0, GRB_INTEGER, "u_" + to_string(0));
+		for (int i = 1; i < 8; i++)
+		{
+			U[i] = Modelo.addVar(1, 8 - 1, 0, GRB_INTEGER, "u_" + to_string(i));
+		}
+
+
+		GRBLinExpr expr = 0;
+
+
+		// Restrições (3)
+		for (int i = 0; i < 8; i++)
+		{
+			expr = 0;
+			for (int j = 0; j < 8; j++)
+			{
+				if (i != j)
+					expr += X[i][j];
+			}
+			Modelo.addConstr(expr == 1, "R3_" + to_string(i));
+		}
+
+
+		// Restrições (4)
+		for (int j = 0; j < 8; j++)
+		{
+			expr = 0;
+			for (int i = 0; i < 8; i++)
+			{
+				if (j != i)
+					expr += X[i][j];
+			}
+			Modelo.addConstr(expr == 1, "R4_" + to_string(j));
+		}
+
+
+		//Restricoes MTZ
+		Modelo.addConstr(U[0] == 0, "RMTZ_0");
+		for (int i = 0; i < 8; i++)
+		{
+			for (int j = 1; j < 8; j++)
+			{
+				if (i != j)
+				{
+					Modelo.addConstr(U[i] - U[j] + (8 - 1) * X[i][j] <= 8 - 1 - 1, "RMTZ_" + to_string(i) + "_" + to_string(j));
+				}
+			}
+		}
+
+
+		// Restricoes (5)
+		//Modelo.addConstr(X[0][5] + X[5][0] <= 1, "R5_0_5_0");
+
+
+		// Optimize model
+		Modelo.optimize();
+
+
+		Modelo.write("C:\\Teste\\ModeloTSP.lp");
+		Modelo.write("C:\\Teste\\ModeloTSP.sol");
+
+
+
+		cout << "Obj: " << Modelo.get(GRB_DoubleAttr_ObjVal) << endl;
+
+
+	}
+	catch (GRBException e) {
+		cout << "Error code = " << e.getErrorCode() << endl;
+		cout << e.getMessage() << endl;
+	}
+	catch (...) {
+		cout << "Exception during optimization" << endl;
+	}
+
+
+	return 0;
+}
